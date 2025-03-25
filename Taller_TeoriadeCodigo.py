@@ -33,8 +33,6 @@ def parametros(abecedario, filas, M):
 def matriz_H(G, q):
     G = np.array(G)
     k, n = G.shape
-    if k >= n:
-        raise ValueError("La matriz G no tiene la forma [I_k | P] válida.")
 
     # Extraer P de G en forma sistemática: G = [I_k | P]
     P = G[:, k:]  # Corregido para tomar todas las columnas desde k en adelante
@@ -45,6 +43,24 @@ def matriz_H(G, q):
 
     return H.tolist()
 
+def perforacion(G, q, col):
+    G_perforada = np.delete(G, col, axis=1)  # Elimina la columna indicada
+
+    # Validación: asegurar que los valores siguen perteneciendo al campo F_q
+    if not all(0 <= elem < q for row in G_perforada for elem in row):
+        raise ValueError(f"Los valores en la matriz perforada deben estar en F_{q}")
+
+    return G_perforada.tolist()
+
+def reduccion(G, q, col):
+    G_reducida = np.delete(G, col, axis=1)  # Elimina la columna indicada
+
+    # Validación: asegurar que los valores siguen perteneciendo al campo F_q
+    if not all(0 <= elem < q for row in G_reducida for elem in row):
+        raise ValueError(f"Los valores en la matriz reducida deben estar en F_{q}")
+
+    return G_reducida.tolist()
+
 # Menú principal
 w = False
 while not w:
@@ -52,9 +68,10 @@ while not w:
     opcion = input("Opciones:\n"
                    "1. G para un código ternario\n"
                    "2. G para un código binario\n"
-                   "3. Salir\n")
+                   "33. Salir\n")
 
     if opcion in ["1", "2"]:
+        """
         print("Ingrese las dimensiones de la matriz")
         n = int(input("Ingrese n filas: "))
         m = int(input("Ingrese m columnas: "))
@@ -70,13 +87,38 @@ while not w:
         print("\nMatriz Generadora G:")
         for fila in G:
             print(" ".join(map(str, fila)))
-
+        """
+        G = np.array([[1, 1, 0, 1, 0, 0, 0],
+              [1, 0, 1, 0, 1, 0, 0],
+              [0, 1, 1, 0, 0, 1, 0],
+              [1, 1, 1,0,0,0,1]])
+        q=2
+        n=7
         # Impresión de codewords
         print(f"\nLista de Codewords: L{{{', '.join(map(str, codewords(G, q)))}}}")
 
         # Cálculo e impresión de parámetros
         parametros(q, n, len(codewords(G, q)))
-
+        
+        #Perforaciones y reduccion
+        col = int(input("Ingrese la columna a perforar (0-indexada): "))
+        try:
+            G = perforacion(G, q, col)
+            print("\nMatriz Generadora después de Perforación:")
+            for fila in G:
+                print(" ".join(map(str, fila)))
+        except ValueError as e:
+            print("Error:", e)
+            
+        col = int(input("Ingrese la columna a reducir (0-indexada): "))
+        try:
+            G = reduccion(G, q, col)
+            print("\nMatriz Generadora después de Reducción:")
+            for fila in G:
+                print(" ".join(map(str, fila)))
+        except ValueError as e:
+            print("Error:", e)
+            
         # Construcción e impresión de la matriz de control
         print("\nMatriz de Control:")
         try:
@@ -85,7 +127,7 @@ while not w:
                 print(" ".join(map(str, fila)))
         except ValueError as e:
             print("Error:", e)
-
+            
     elif opcion == "3":
         w = True
         print("Gracias por usar DecodeTalker. ¡Hasta luego!")
