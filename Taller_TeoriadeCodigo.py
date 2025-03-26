@@ -2,6 +2,7 @@
 Miembros:
 Vivian Buelvas
 Juanangel Martinez
+Ronald Arrieta
 """
 import math
 from itertools import product
@@ -10,26 +11,37 @@ import numpy as np
 def codewords(G, q):
     G = np.array(G)
     k, n = G.shape
-    u = list(product(range(q), repeat=k))
+    u = list(product(range(q), repeat = k))
+    C = [tuple(map(int, np.dot(np.array(c), G) % q)) for c in u]
+    return C
 
-    # Genera las codewords aplicando la multiplicación de matrices y el módulo
-    codewords = [tuple(map(int, np.dot(c, G) % q)) for c in u]
-    return codewords
+def extencion(C, q):
+  C_ext = []
+  for cw in C:
+    suma = sum(cw)
+    c_e = (-suma)%q
+    cw_e = cw + (c_e,)
+    C_ext.append(cw_e)
+  return C_ext
+
 
 def parametros(abecedario, filas, M):
-    """
-    Parametros en formato [n,k,d]
-    Formulas usadas:
-    n = Numero de filas de la matriz
-    k = log(base(q)) de M
-    d = n-k+1
-    """
     k = math.log(M, abecedario)
-    d = filas - k + 1  # Corregido: usar filas en lugar de "n"
+    d = filas - k + 1  
 
     print(f"Parámetros formato [n, M]: [{filas}, {M}]")
     print(f"Formato [n, k, d]: [{filas}, {k:.2f}, {d:.2f}]")
 
+def parametros_ext(n, k, d):
+    n_ext = n + 1
+    k_ext = k
+    if d % 2 == 1:
+        d_ext = d + 1
+    else:
+        d_ext = d
+    print(f"Parámetros Código Extendido [n', k', d']: [{n_ext}, {k_ext:.2f}, {d_ext:.2f}]")
+    return n_ext, k_ext, d_ext
+    
 def matriz_H(G, q):
     G = np.array(G)
     k, n = G.shape
@@ -71,35 +83,61 @@ while not w:
                    "33. Salir\n")
 
     if opcion in ["1", "2"]:
-        """
+        
         print("Ingrese las dimensiones de la matriz")
         n = int(input("Ingrese n filas: "))
         m = int(input("Ingrese m columnas: "))
-        q = 3 if opcion == "1" else 2  # Determinar el campo según la opción
+        q = int(input("Ingrese el valor de q: "))
+
+        if q < 2 or q > 3:
+          print("El valor de q debe estar entre 2 y 3")
+          while q < 2 or q > 3:
+            q = int(input("Ingrese el valor de q: "))
+
         G = []
 
         # Armado de la matriz
-        for _ in range(n):  # Iterar correctamente para las filas
-            fila = [int(input("Ingrese un elemento: ")) for _ in range(m)]
+        if q == 2:
+          for _ in range(n):  # Iterar correctamente para las filas
+            while True:
+              fila = [int(input(f"Ingrese el elemento {_+1}: ")) for _ in range(m)]
+              if all(elemento >= 0 and elemento < 2 for elemento in fila):
+                break
+              print("El valor debe ser 0 o 1")
+            G.append(fila)
+
+        
+        elif q == 3:
+          for _ in range(n):  # Iterar correctamente para las filas
+            while True:
+              fila = [int(input(f"Ingrese el elemento {_+1}: ")) for _ in range(m)]
+              if all(elemento >= 0 and elemento < 3 for elemento in fila):
+                break
+              print("El valor debe ser 0, 1 o 2")
             G.append(fila)
 
         # Impresión de la matriz
         print("\nMatriz Generadora G:")
         for fila in G:
-            print(" ".join(map(str, fila)))
-        """
-        G = np.array([[1, 1, 0, 1, 0, 0, 0],
-              [1, 0, 1, 0, 1, 0, 0],
-              [0, 1, 1, 0, 0, 1, 0],
-              [1, 1, 1,0,0,0,1]])
-        q=2
-        n=7
-        # Impresión de codewords
-        print(f"\nLista de Codewords: L{{{', '.join(map(str, codewords(G, q)))}}}")
+          print(" ".join(map(str, fila)))
 
-        # Cálculo e impresión de parámetros
+        print("\nParámetros del código original")
         parametros(q, n, len(codewords(G, q)))
-        
+
+        C = codewords(G, q)
+        print("\nCodewords del código:")
+        for cw in C:
+            print(cw)
+
+        C_ext = extencion(C, q)
+        print("\nCodewords del código extendido:")
+        for cw in C_ext:
+            print(cw)
+
+        n, k, d = parametros(q, len(C[0]), len(C)) 
+        print("\nParámetros del código extendido")
+        parametros_ext(n, k, d)
+      
         #Perforaciones y reduccion
         col = int(input("Ingrese la columna a perforar (0-indexada): "))
         try:
